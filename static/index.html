@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Slot Game with Balance</title>
+    <style>
+        body {
+          font-family: 'Segoe UI', sans-serif;
+          background: #111;
+          color: #fff;
+          text-align: center;
+          padding: 50px;
+        }
+
+        h1 {
+          margin-bottom: 10px;
+        }
+
+        #balance {
+          font-size: 18px;
+          margin-bottom: 20px;
+        }
+
+        #slot-machine {
+          display: flex;
+          justify-content: center;
+          gap: 20px;
+          margin: 30px 0;
+        }
+
+        .reel {
+          width: 100px;
+          height: 100px;
+          background: #333;
+          border: 4px solid #fff;
+          border-radius: 12px;
+          font-size: 48px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          box-shadow: 0 0 10px #000;
+          transition: transform 0.3s ease-in-out;
+        }
+
+        .highlight {
+          border-color: gold;
+          box-shadow: 0 0 20px gold;
+        }
+
+        input[type="number"] {
+          padding: 8px;
+          font-size: 16px;
+          width: 80px;
+          margin-right: 10px;
+          border-radius: 6px;
+          border: none;
+          text-align: center;
+        }
+
+        button {
+          padding: 12px 30px;
+          font-size: 20px;
+          background: gold;
+          color: #111;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: 0.3s;
+        }
+
+        button:disabled {
+          background: #aaa;
+          cursor: not-allowed;
+        }
+
+        #message {
+          margin-top: 20px;
+          font-size: 22px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🎰 Cubeia Slot Game Test</h1>
+<div id="balance">Balance: <span id="coins">1000</span> coins</div>
+
+<div>
+    <input type="number" id="bet" value="50" min="1" />
+    <button id="spinBtn" onclick="spin()">SPIN</button>
+</div>
+
+<div id="slot-machine">
+    <div class="reel" id="reel1">🍒</div>
+    <div class="reel" id="reel2">🍋</div>
+    <div class="reel" id="reel3">🍉</div>
+</div>
+
+<div id="message"></div>
+
+<script>
+    const symbols = ["🍒", "🍋", "🍉", "🍊", "⭐", "7️⃣"];
+    const reels = [
+      document.getElementById('reel1'),
+      document.getElementById('reel2'),
+      document.getElementById('reel3'),
+    ];
+    const message = document.getElementById('message');
+    const coinDisplay = document.getElementById('coins');
+    const spinBtn = document.getElementById('spinBtn');
+    let balance = 1000;
+    let isSpinning = false;
+
+    function getRandomSymbol() {
+      return symbols[Math.floor(Math.random() * symbols.length)];
+    }
+
+    function updateBalanceDisplay() {
+      coinDisplay.textContent = balance;
+    }
+
+    function spin() {
+      if (isSpinning) return;
+
+      const bet = parseInt(document.getElementById('bet').value);
+      if (isNaN(bet) || bet < 1) {
+        alert("Enter a valid bet amount.");
+        return;
+      }
+
+      if (bet > balance) {
+        alert("Not enough coins!");
+        return;
+      }
+
+      isSpinning = true;
+      spinBtn.disabled = true;
+      message.textContent = '';
+      reels.forEach(reel => reel.classList.remove('highlight'));
+
+      balance -= bet;
+      updateBalanceDisplay();
+
+      let finalSymbols = [];
+
+      reels.forEach((reel, index) => {
+        let spins = 10 + index * 5;
+        let i = 0;
+
+        const spinInterval = setInterval(() => {
+          reel.textContent = getRandomSymbol();
+          i++;
+          if (i >= spins) {
+            clearInterval(spinInterval);
+            finalSymbols[index] = reel.textContent;
+
+            if (finalSymbols.filter(Boolean).length === 3) {
+              evaluate(finalSymbols, bet);
+              isSpinning = false;
+              setTimeout(() => {
+                spinBtn.disabled = false;
+              }, 1500); // Cooldown after spin
+            }
+          }
+        }, 100);
+      });
+    }
+
+    function evaluate([s1, s2, s3], bet) {
+      let winAmount = 0;
+
+      if (s1 === s2 && s2 === s3) {
+        winAmount = bet * 10;
+        message.textContent = `🎉 JACKPOT! +${winAmount} coins!`;
+        highlightAll();
+      } else if (s1 === s2 || s2 === s3 || s1 === s3) {
+        winAmount = bet * 2;
+        message.textContent = `👍 Nice match! +${winAmount} coins.`;
+        highlightMatches(s1, s2, s3);
+      } else {
+        message.textContent = "😢 No match, try again!";
+      }
+
+      balance += winAmount;
+      updateBalanceDisplay();
+    }
+
+    function highlightAll() {
+      reels.forEach(reel => reel.classList.add('highlight'));
+    }
+
+    function highlightMatches(s1, s2, s3) {
+      if (s1 === s2) reels[0].classList.add('highlight'), reels[1].classList.add('highlight');
+      if (s2 === s3) reels[1].classList.add('highlight'), reels[2].classList.add('highlight');
+      if (s1 === s3) reels[0].classList.add('highlight'), reels[2].classList.add('highlight');
+    }
+</script>
+</body>
+</html>
