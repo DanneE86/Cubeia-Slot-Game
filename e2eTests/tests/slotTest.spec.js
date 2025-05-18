@@ -52,11 +52,18 @@ test.describe("Slot Game Tests", () => {
     // Run a loop until the correct message appears
     let match = false;
     while (!match) {
+      // Check balance before spin
+      const balanceBeforeSpin = parseInt(await page.locator("#coins").textContent());
+      
       await page.click("#spinBtn");
       await page.waitForSelector("#spinBtn:not([disabled])");
+      
       const msg = await page.locator("#message").textContent();
       if (msg && msg.includes("No match, try again")) {
         match = true;
+        // Verify balance decreased after getting a match
+        const balanceAfterSpin = parseInt(await page.locator("#coins").textContent());
+        expect(balanceAfterSpin).toBeLessThan(balanceBeforeSpin);
       }
     }
     expect(match).toBeTruthy();
@@ -65,20 +72,26 @@ test.describe("Slot Game Tests", () => {
   test("Nice match (two alike)", async ({ page }) => {
     const betAmount = 50;
   
-   
     await page.fill("#bet", String(betAmount));
     const bet = parseInt(await page.locator("#bet").inputValue());
     const expectedWin = betAmount * 2;
   
-   // Run a loop until the correct message appears
+    // Run a loop until the correct message appears
     let match = false;
     while (!match) {
       await refillBalanceIfLow(page);
+      // Check balance before spin
+      const balanceBeforeSpin = parseInt(await page.locator("#coins").textContent());
+      
       await page.click("#spinBtn");
       await page.waitForSelector("#spinBtn:not([disabled])");
+      
       const msg = await page.locator("#message").textContent();
       if (msg && msg.includes("Nice match")) {
         match = true;
+        // Verify balance increased after getting a match
+        const balanceAfterSpin = parseInt(await page.locator("#coins").textContent());
+        expect(balanceAfterSpin).toBeGreaterThan(balanceBeforeSpin);
       }
     }
     expect(match).toBeTruthy();
